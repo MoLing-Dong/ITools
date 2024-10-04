@@ -58,7 +58,6 @@ def process_directory(input_dir: str, output_dir: str) -> None:
 
 if __name__ == "__main__":
     # 定义要转换的目录
-    input_dir = r'D:\ProjectForStudent\ITools'  # MP3 文件所在的目录
-    output_dir = r'D:\ProjectForStudent\ITools\output'  # 转换后的 WAV 文件存放目录
-
+    input_dir = r'./data'  # MP3 文件所在的目录
+    output_dir = r'./output'  # 转换后的 WAV 文件存放目录
     process_directory(input_dir, output_dir)
