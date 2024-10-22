@@ -2,21 +2,18 @@ import os
 import subprocess
 from concurrent.futures import ThreadPoolExecutor
 
-"""
-把 MP3 或 WAV 文件转换为 WAV 文件，并确保采样率为 384kHz，采样位深为 32bit。
-"""
-
 
 def convert_audio_to_wav(input_path: str, output_path: str) -> None:
     """
-    使用 FFmpeg 将音频文件转换为 WAV 文件，并确保采样率为 384kHz，采样位深为 32bit。
+    使用 FFmpeg 将音频文件转换为 WAV 文件，并确保采样率为 96000Hz，采样位深为 32bit。
 
     :param input_path: 输入音频文件的路径 (MP3 或 WAV)
     :param output_path: 转换后的 WAV 文件的输出路径
     """
+    # 尝试使用系统 FFmpeg
     command = [
         'ffmpeg', '-i', input_path,  # 输入文件
-        '-ar', '192000',  # 采样率 384kHz
+        '-ar', '96000',  # 采样率 96000Hz
         '-ac', '2',  # 双声道
         '-sample_fmt', 's32',  # 32bit 位深度
         '-acodec', 'pcm_s32le',  # 使用 32 位的 PCM 编码
@@ -24,13 +21,24 @@ def convert_audio_to_wav(input_path: str, output_path: str) -> None:
     ]
 
     try:
+        # 尝试运行系统的 ffmpeg
         result = subprocess.run(command, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
                                 errors='ignore')
         print(f"转换完成: {output_path}")
         print(result.stdout)  # 输出 FFmpeg 的信息
     except subprocess.CalledProcessError as e:
-        print(f"转换失败: {input_path}，错误信息: {e}")
-        print(e.stderr)  # 打印 FFmpeg 错误信息
+        print(f"系统 FFmpeg 转换失败: {input_path}，尝试使用本地 FFmpeg")
+        # 尝试使用当前目录下的 ffmpeg
+        local_ffmpeg = './utils/ffmpeg'  # 假设 ffmpeg 在当前目录下的 utils 文件夹
+        command[0] = local_ffmpeg  # 替换为本地的 ffmpeg 可执行文件路径
+        try:
+            result = subprocess.run(command, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
+                                    errors='ignore')
+            print(f"本地 FFmpeg 转换完成: {output_path}")
+            print(result.stdout)  # 输出 FFmpeg 的信息
+        except subprocess.CalledProcessError as e:
+            print(f"本地 FFmpeg 转换仍然失败: {input_path}，错误信息: {e}")
+            print(e.stderr)  # 打印 FFmpeg 错误信息
 
 
 def process_directory(all_audio_input_dir: str, output_dir: str) -> None:
@@ -41,8 +49,7 @@ def process_directory(all_audio_input_dir: str, output_dir: str) -> None:
     :param output_dir: 转换后的 WAV 文件的输出目录
     """
     # 确保输出目录存在
-    if not os.path.exists(output_dir):
-        os.makedirs(output_dir)
+    os.makedirs(output_dir, exist_ok=True)
 
     # 搜索目录中的 MP3 和 WAV 文件
     audio_files = [f for f in os.listdir(all_audio_input_dir) if f.endswith((".mp3", ".wav"))]
