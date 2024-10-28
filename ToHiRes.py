@@ -2,6 +2,8 @@ import os
 import subprocess
 from concurrent.futures import ThreadPoolExecutor
 
+from loguru import logger
+
 
 def convert_audio_to_wav(input_path: str, output_path: str) -> None:
     """
@@ -24,21 +26,20 @@ def convert_audio_to_wav(input_path: str, output_path: str) -> None:
         # 尝试运行系统的 ffmpeg
         result = subprocess.run(command, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
                                 errors='ignore')
-        print(f"转换完成: {output_path}")
-        print(result.stdout)  # 输出 FFmpeg 的信息
+        logger.info(f"转换完成: {output_path}")
     except subprocess.CalledProcessError as e:
-        print(f"系统 FFmpeg 转换失败: {input_path}，尝试使用本地 FFmpeg")
+        logger.info(f"系统 FFmpeg 转换失败: {input_path}，尝试使用本地 FFmpeg")
         # 尝试使用当前目录下的 ffmpeg
         local_ffmpeg = './utils/ffmpeg'  # 假设 ffmpeg 在当前目录下的 utils 文件夹
         command[0] = local_ffmpeg  # 替换为本地的 ffmpeg 可执行文件路径
         try:
             result = subprocess.run(command, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
                                     errors='ignore')
-            print(f"本地 FFmpeg 转换完成: {output_path}")
-            print(result.stdout)  # 输出 FFmpeg 的信息
+            logger.info(f"本地 FFmpeg 转换完成: {output_path}")
+            logger.info(result.stdout)  # 输出 FFmpeg 的信息
         except subprocess.CalledProcessError as e:
-            print(f"本地 FFmpeg 转换仍然失败: {input_path}，错误信息: {e}")
-            print(e.stderr)  # 打印 FFmpeg 错误信息
+            logger.info(f"本地 FFmpeg 转换仍然失败: {input_path}，错误信息: {e}")
+            logger.info(e.stderr)  # 打印 FFmpeg 错误信息
 
 
 def process_directory(all_audio_input_dir: str, output_dir: str) -> None:
@@ -54,7 +55,7 @@ def process_directory(all_audio_input_dir: str, output_dir: str) -> None:
     # 搜索目录中的 MP3 和 WAV 文件
     audio_files = [f for f in os.listdir(all_audio_input_dir) if f.endswith((".mp3", ".wav"))]
     if not audio_files:
-        print("目录中没有找到音频文件。")
+        logger.info("目录中没有找到音频文件。")
         return
 
     # 使用多线程处理音频文件的转换
