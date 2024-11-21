@@ -164,6 +164,12 @@ cython_debug/
 
 #所有MP3
 *.mp3
+*.wav
+*.zip
+*.rar
 .idea
 data
 output/
+enhanced_audio
+extracted_audio
+audio_segments

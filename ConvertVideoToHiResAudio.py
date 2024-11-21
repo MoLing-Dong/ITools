@@ -13,10 +13,8 @@ def generate_chinese_name() -> str:
     生成一个三字中文名称。
     :return: 三字中文名称
     """
-    chinese_chars = [
-        "梦", "星", "云", "雨", "花", "火", "月", "风", "雪", "阳",
-        "晨", "夜", "树", "海", "山", "波", "歌", "乐", "心", "行"
-    ]
+    chinese_chars = ["松", "梅", "柳", "杏", "枫", "兰", "芦", "藤"]
+
     return ''.join(random.choice(chinese_chars) for _ in range(3))
 
 
@@ -42,7 +40,7 @@ def extract_audio_from_video(video_path: str, output_dir: str) -> str:
 
 def cut_audio(audio_path: str, output_dir: str) -> list:
     """
-    使用 pydub 将音频文件分割成多个指定时长的片段，并返回所有片段的路径列表。
+    使用 pydub 将音频文件分割成多个随机时长的片段，并返回所有片段的路径列表。
     :param audio_path: 输入音频文件的路径
     :param output_dir: 分割后音频片段的存放目录
     :return: 包含所有音频片段路径的列表
@@ -50,16 +48,18 @@ def cut_audio(audio_path: str, output_dir: str) -> list:
     try:
         # 使用 pydub 加载音频文件
         audio = AudioSegment.from_wav(audio_path)
-        segment_duration = random.randint(185 * 1000, 195 * 1000)  # 随机选择时长在 3 分 5 秒到 3 分 10 秒之间
-        duration = len(audio)
+        duration = len(audio)  # 获取音频总时长
 
         audio_segment_paths = []
         start = 0
 
         # 使用 pydub 逐个切割音频片段
         while start < duration:
+            # 在循环内生成新的随机片段时长
+            segment_duration = random.randint(180 * 1000, 195 * 1000)
             end = min(start + segment_duration, duration)
             audio_segment = audio[start:end]
+
             # 生成唯一的文件名
             segment_filename = f"{generate_chinese_name()}.wav"
             audio_output_path = os.path.join(output_dir, segment_filename)
@@ -67,7 +67,7 @@ def cut_audio(audio_path: str, output_dir: str) -> list:
             logger.info(f"剪切音频片段完成: {audio_output_path}")
 
             audio_segment_paths.append(audio_output_path)
-            start += segment_duration
+            start = end  # 更新起始位置为当前片段的结束位置
 
         return audio_segment_paths
     except Exception as e:
