@@ -10,15 +10,17 @@ from ToHiRes import process_directory as enhance_audio_quality  # 导入hires模
 
 def generate_chinese_name() -> str:
     """
-    生成一个三字中文名称。
-    :return: 三字中文名称
+    随机生成一个三字中文歌曲名称。
+    :return: 三字中文歌曲名称
     """
-    chinese_chars = ["松", "梅", "柳", "杏", "枫", "兰", "芦", "藤"]
+    words = ["梦", "心", "光", "夜", "雨", "风", "星", "海", "月", "花", "雪", "琴", "云", "山", "情", "歌", "泪", "舞",
+             "影"]
 
-    return ''.join(random.choice(chinese_chars) for _ in range(3))
+    # 随机选取三个词并组合
+    return ''.join(random.choice(words) for _ in range(3))
 
 
-def extract_audio_from_video(video_path: str, output_dir: str) -> str:
+def extract_audio_from_video(video_path: str, output_dir: str) -> str | None:
     """
     从视频文件提取音频并保存为 WAV 格式。
     :param video_path: 输入视频文件的路径
