@@ -15,8 +15,6 @@ def generate_chinese_name() -> str:
     """
     words = ["梦", "心", "光", "夜", "雨", "风", "星", "海", "月", "花", "雪", "琴", "云", "山", "情", "歌", "泪", "舞",
              "影"]
-
-    # 随机选取三个词并组合
     return ''.join(random.choice(words) for _ in range(3))
 
 
@@ -28,15 +26,13 @@ def extract_audio_from_video(video_path: str, output_dir: str) -> str | None:
     :return: 提取的音频文件路径
     """
     audio_output_path = os.path.join(output_dir, f"{os.path.splitext(os.path.basename(video_path))[0]}.wav")
-
     try:
-        # 使用 subprocess 调用 ffmpeg 提取音频
         command = ["ffmpeg", "-i", video_path, "-q:a", "0", "-map", "a", audio_output_path, "-y"]
         subprocess.run(command, check=True)
         logger.info(f"提取音频完成: {audio_output_path}")
         return audio_output_path
     except subprocess.CalledProcessError as e:
-        logger.info(f"提取音频失败: {video_path}，错误信息: {e}")
+        logger.error(f"提取音频失败: {video_path}，错误信息: {e}")
         return None
 
 
@@ -48,72 +44,78 @@ def cut_audio(audio_path: str, output_dir: str) -> list:
     :return: 包含所有音频片段路径的列表
     """
     try:
-        # 使用 pydub 加载音频文件
-        audio = AudioSegment.from_wav(audio_path)
-        duration = len(audio)  # 获取音频总时长
+        audio = AudioSegment.from_file(audio_path)
+        duration = len(audio)
 
         audio_segment_paths = []
         start = 0
-
-        # 使用 pydub 逐个切割音频片段
         while start < duration:
-            # 在循环内生成新的随机片段时长
             segment_duration = random.randint(180 * 1000, 195 * 1000)
             end = min(start + segment_duration, duration)
             audio_segment = audio[start:end]
 
-            # 生成唯一的文件名
             segment_filename = f"{generate_chinese_name()}.wav"
             audio_output_path = os.path.join(output_dir, segment_filename)
             audio_segment.export(audio_output_path, format="wav")
             logger.info(f"剪切音频片段完成: {audio_output_path}")
 
             audio_segment_paths.append(audio_output_path)
-            start = end  # 更新起始位置为当前片段的结束位置
+            start = end
 
         return audio_segment_paths
     except Exception as e:
-        logger.info(f"音频分割失败: {audio_path}，错误信息: {e}")
+        logger.error(f"音频分割失败: {audio_path}，错误信息: {e}")
         return []
 
 
-def process_video_directory(video_input_dir: str) -> None:
+def process_file(input_path: str, output_base_dir: str) -> None:
     """
-    遍历指定目录，处理所有视频文件，提取音频并提升音质。
-    :param video_input_dir: 包含视频文件的输入目录
+    根据输入文件类型（音频或视频）进行处理。
+    :param input_path: 输入文件的路径
+    :param output_base_dir: 输出的基础目录
     """
-    os.makedirs(video_input_dir, exist_ok=True)
+    filename = os.path.basename(input_path)
+    name, ext = os.path.splitext(filename)
+    ext = ext.lower()
 
-    video_files = [f for f in os.listdir(video_input_dir) if f.endswith((".mp4", ".avi", ".mov", ".mkv"))]
+    extracted_audio_dir = os.path.join(output_base_dir, "extracted_audio", name)
+    audio_output_dir = os.path.join(output_base_dir, "audio_segments", name)
+    enhanced_audio_dir = os.path.join(output_base_dir, "enhanced_audio", name)
 
-    if not video_files:
-        logger.info("目录中没有找到视频文件。")
+    os.makedirs(extracted_audio_dir, exist_ok=True)
+    os.makedirs(audio_output_dir, exist_ok=True)
+    os.makedirs(enhanced_audio_dir, exist_ok=True)
+
+    if ext in (".mp4", ".avi", ".mov", ".mkv"):
+        logger.info(f"处理视频文件: {input_path}")
+        audio_path = extract_audio_from_video(input_path, extracted_audio_dir)
+        if audio_path:
+            cut_audio(audio_path, audio_output_dir)
+    elif ext in (".wav", ".mp3", ".flac", ".aac"):
+        logger.info(f"处理音频文件: {input_path}")
+        cut_audio(input_path, audio_output_dir)
+    else:
+        logger.warning(f"不支持的文件类型: {input_path}")
         return
 
-    for filename in video_files:
-        video_path = os.path.join(video_input_dir, filename)
-        song_name = os.path.splitext(filename)[0]  # 获取当前视频的歌曲名称
+    enhance_audio_quality(audio_output_dir, enhanced_audio_dir)
+    logger.info(f"{name} 的处理完成，音质提升已保存至: {enhanced_audio_dir}")
 
-        # 创建与歌曲名称对应的目录
-        extracted_audio_dir = os.path.join('./extracted_audio', song_name)  # 提取的音频存放目录
-        audio_output_dir = os.path.join('./audio_segments', song_name)  # 分割后的音频片段存放目录
-        enhanced_audio_dir = os.path.join('./enhanced_audio', song_name)  # 提升后音频的存放目录
 
-        os.makedirs(extracted_audio_dir, exist_ok=True)
-        os.makedirs(audio_output_dir, exist_ok=True)
-        os.makedirs(enhanced_audio_dir, exist_ok=True)
-
-        # 提取音频
-        audio_path = extract_audio_from_video(video_path, extracted_audio_dir)
-        if audio_path:
-            # 分割提取后的音频
-            cut_audio(audio_path, audio_output_dir)
-
-        # 调用hires进行音质提升
-        enhance_audio_quality(audio_output_dir, enhanced_audio_dir)
-        logger.info(f"{song_name} 的音质提升完成。")
+def process_directory(input_dir: str, output_base_dir: str) -> None:
+    """
+    遍历目录，处理所有音频和视频文件。
+    :param input_dir: 输入目录
+    :param output_base_dir: 输出目录
+    """
+    os.makedirs(output_base_dir, exist_ok=True)
+    for file in os.listdir(input_dir):
+        file_path = os.path.join(input_dir, file)
+        if os.path.isfile(file_path):
+            process_file(file_path, output_base_dir)
 
 
 if __name__ == "__main__":
-    input_dir = r'./data'  # 视频文件所在的目录
-    process_video_directory(input_dir)
+    input_dir = r'./data'  # 输入文件所在目录
+    output_dir = r'./output'  # 处理后的文件存放目录
+    process_directory(input_dir, output_dir)
