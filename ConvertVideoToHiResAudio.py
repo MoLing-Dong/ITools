@@ -8,14 +8,45 @@ from pydub import AudioSegment
 from ToHiRes import process_directory as enhance_audio_quality  # 导入hires模块的音质提升方法
 
 
+def weighted_choice(choices):
+    """
+    根据加权概率随机选择一个元素。
+    :param choices: 元素和权重的列表 [(元素, 权重), ...]
+    :return: 随机选择的元素
+    """
+    total = sum(weight for _, weight in choices)
+    r = random.uniform(0, total)
+    upto = 0
+    for item, weight in choices:
+        if upto + weight >= r:
+            return item
+        upto += weight
+    return choices[-1][0]  # 如果没有命中，返回最后一个
+
+
 def generate_chinese_name() -> str:
     """
-    随机生成一个三字中文歌曲名称。
+    随机生成一个三字中文歌曲名称，增强随机性。
     :return: 三字中文歌曲名称
     """
-    words = ["梦", "心", "光", "夜", "雨", "风", "星", "海", "月", "花", "雪", "琴", "云", "山", "情", "歌", "泪", "舞",
-             "影"]
-    return ''.join(random.choice(words) for _ in range(3))
+    # 副字列表，带权重
+    words = [("晓", 1.5), ("霞", 2), ("烟", 1), ("波", 0.8), ("柳", 1.2), ("荷", 1), ("石", 0.7), ("溪", 1.1),
+             ("泉", 1), ("谷", 1.2), ("峰", 0.9), ("岭", 1.1), ("潭", 1), ("瀑", 0.5), ("径", 1.2), ("舟", 0.8),
+             ("帆", 0.6), ("桥", 1.3), ("影", 1.7), ("梦", 2), ("情", 1.8), ("韵", 1.4), ("心", 1.6), ("思", 1.3),
+             ("魂", 1), ("歌", 0.7), ("语", 1), ("诗", 1.2), ("画", 1.5)]
+
+    # 使用加权选择
+    first_char = weighted_choice(words)
+    second_char, third_char = random.sample([w for w, _ in words], 2)  # 防止重复
+
+    # 随机选择格式
+    patterns = [
+        f"{first_char}{second_char}的{third_char}",
+        f"{first_char}与{second_char}{third_char}",
+        f"{second_char}中{second_char}{third_char}",
+        f"{first_char}{second_char}{third_char}",
+    ]
+    return random.choice(patterns)
 
 
 def extract_audio_from_video(video_path: str, output_dir: str) -> str | None:
