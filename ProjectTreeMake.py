@@ -14,19 +14,27 @@ ALL_EXCLUDE_DIRS = set(EXCLUDE_DIRS + PYTHON_EXCLUDE_DIRS + JAVA_EXCLUDE_DIRS + 
 
 
 def generate_tree(directory, indent=""):
-    for entry in os.listdir(directory):
+    # 获取当前目录下的所有目录项
+    items = [entry for entry in os.listdir(directory) if os.path.isdir(os.path.join(directory, entry))]
+    # 过滤掉需要排除的目录
+    valid_items = [item for item in items if item not in ALL_EXCLUDE_DIRS]
+    for index, entry in enumerate(valid_items):
         path = os.path.join(directory, entry)
-        if os.path.isdir(path):
-            # 检查是否需要排除当前目录
-            if entry in ALL_EXCLUDE_DIRS:
-                continue
+        # 判断是否为最后一个目录
+        if index == len(valid_items) - 1:
+            print(f"{indent}└── {entry}/")
+            new_indent = indent + "    "
+        else:
             print(f"{indent}├── {entry}/")
-            generate_tree(path, indent + "│   ")
+            new_indent = indent + "│   "
+        generate_tree(path, new_indent)
 
 
 if __name__ == "__main__":
     project_path = input("Enter the project directory path: ")
     if os.path.exists(project_path) and os.path.isdir(project_path):
+        # 先打印当前文件夹名(project_path) 只要最后的文件夹的名字
+        print(f"{os.path.basename(project_path)}")
         generate_tree(project_path)
     else:
         print("Invalid directory path!")
