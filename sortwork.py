@@ -38,7 +38,7 @@ def calculate_schedule(start_time, work_hours=12, rest_hours=24):
 
 
 # 输入今天的下班时间
-start_time = "2025-1-27 18:00"  # 今天是六点下班
+start_time = "2025-10-04 8:00"  # 今天是六点下班
 
 # 计算未来的上下班时间
 schedule = calculate_schedule(start_time)
@@ -49,4 +49,3 @@ for entry in schedule:
     print(f"班次 {entry['班次']}:")
     print(f"  上班时间: {entry['上班时间']}")
     print(f"  下班时间: {entry['下班时间']}")
-    print()

@@ -5,7 +5,7 @@ import os
 """
 # 定义需要排除的目录列表
 EXCLUDE_DIRS = [".git", ".vscode", ".idea"]
-PYTHON_EXCLUDE_DIRS = ["__pycache__", "venv"]
+PYTHON_EXCLUDE_DIRS = ["__pycache__", ".venv"]
 JAVA_EXCLUDE_DIRS = ["target", "out", ".vscode"]
 WEB_EXCLUDE_DIRS = ["node_modules", "dist"]
 

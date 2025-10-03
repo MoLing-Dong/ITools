@@ -1,0 +1,18 @@
+[project]
+name = "itools"
+version = "0.1.0"
+description = "A collection of tools for media processing"
+readme = "README.md"
+requires-python = ">=3.8"
+dependencies = [
+    "loguru>=0.7.2",
+    "pydub>=0.25.1",
+]
+
+[tool.hatch.build.targets.wheel]
+include = ["*.py"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
